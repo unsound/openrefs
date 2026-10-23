@@ -963,7 +963,6 @@ static ssize_t fsapi_linux_file_op_aio_read(
 #if 0
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3,16,0))
 static ssize_t fsapi_linux_file_op_write_iter(
-static ssize_t fsapi_linux_file_op_write_iter(
 		struct kiocb *const iocb,
 		struct iov_iter *const from);
 #else /* LINUX_VERSION_CODE < KERNEL_VERSION(3,16,0) */
