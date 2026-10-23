@@ -172,19 +172,21 @@ typedef struct fsapi_node fsapi_node;
 typedef enum {
 	FSAPI_NODE_ATTRIBUTE_TYPE_SIZE                          = 0x0001,
 	FSAPI_NODE_ATTRIBUTE_TYPE_ALLOCATED_SIZE                = 0x0002,
-	FSAPI_NODE_ATTRIBUTE_TYPE_LINK_COUNT                    = 0x0004,
-	FSAPI_NODE_ATTRIBUTE_TYPE_INODE_NUMBER                  = 0x0008,
-	FSAPI_NODE_ATTRIBUTE_TYPE_MODE                          = 0x0010,
-	FSAPI_NODE_ATTRIBUTE_TYPE_UID                           = 0x0020,
-	FSAPI_NODE_ATTRIBUTE_TYPE_GID                           = 0x0040,
-	FSAPI_NODE_ATTRIBUTE_TYPE_CREATION_TIME                 = 0x0080,
-	FSAPI_NODE_ATTRIBUTE_TYPE_LAST_STATUS_CHANGE_TIME       = 0x0100,
-	FSAPI_NODE_ATTRIBUTE_TYPE_LAST_DATA_CHANGE_TIME         = 0x0200,
-	FSAPI_NODE_ATTRIBUTE_TYPE_LAST_DATA_ACCESS_TIME         = 0x0400,
-	FSAPI_NODE_ATTRIBUTE_TYPE_BSD_FLAGS                     = 0x0400,
-	FSAPI_NODE_ATTRIBUTE_TYPE_WINDOWS_FLAGS                 = 0x0800,
-	FSAPI_NODE_ATTRIBUTE_TYPE_SYMLINK_TARGET                = 0x1000,
-	FSAPI_NODE_ATTRIBUTE_TYPE_ALL                           = 0x1FFF
+	FSAPI_NODE_ATTRIBUTE_TYPE_ALLOCATION_BLOCK_SIZE         = 0x0004,
+	FSAPI_NODE_ATTRIBUTE_TYPE_LINK_COUNT                    = 0x0008,
+	FSAPI_NODE_ATTRIBUTE_TYPE_INODE_NUMBER                  = 0x0010,
+	FSAPI_NODE_ATTRIBUTE_TYPE_DEVICE_NUMBER                 = 0x0020,
+	FSAPI_NODE_ATTRIBUTE_TYPE_MODE                          = 0x0040,
+	FSAPI_NODE_ATTRIBUTE_TYPE_UID                           = 0x0080,
+	FSAPI_NODE_ATTRIBUTE_TYPE_GID                           = 0x0100,
+	FSAPI_NODE_ATTRIBUTE_TYPE_CREATION_TIME                 = 0x0200,
+	FSAPI_NODE_ATTRIBUTE_TYPE_LAST_STATUS_CHANGE_TIME       = 0x0400,
+	FSAPI_NODE_ATTRIBUTE_TYPE_LAST_DATA_CHANGE_TIME         = 0x0800,
+	FSAPI_NODE_ATTRIBUTE_TYPE_LAST_DATA_ACCESS_TIME         = 0x1000,
+	FSAPI_NODE_ATTRIBUTE_TYPE_BSD_FLAGS                     = 0x2000,
+	FSAPI_NODE_ATTRIBUTE_TYPE_WINDOWS_FLAGS                 = 0x4000,
+	FSAPI_NODE_ATTRIBUTE_TYPE_SYMLINK_TARGET                = 0x8000,
+	FSAPI_NODE_ATTRIBUTE_TYPE_ALL                           = 0xFFFF
 } fsapi_node_attribute_types;
 
 typedef struct {
@@ -225,6 +227,11 @@ typedef struct {
 	u64 allocated_size;
 
 	/**
+	 * The size of an allocation block on disk, in bytes.
+	 */
+	u64 allocation_block_size;
+
+	/**
 	 * The number of links of the node.
 	 */
 	u64 link_count;
@@ -233,6 +240,14 @@ typedef struct {
 	 * The UNIX inode number of the node.
 	 */
 	u64 inode_number;
+
+	/**
+	 * The device number of a block/character device node.
+	 */
+	struct {
+		u64 major;
+		u64 minor;
+	} device_number;
 
 	/**
 	 * The UNIX mode of the node.
