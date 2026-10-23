@@ -8,6 +8,7 @@ ccflags-y := \
 refs-y := \
 	refs_init.o \
 	fsapi_linux.o \
+	fsapi_options.o \
 	sys_linux.o \
 	fsapi.o \
 	node.o \

@@ -48,6 +48,40 @@ typedef struct {
 	size_t entries_count;
 } fsapi_options_specification;
 
+#define fsapi_options_log_missing_value(name, suffix) \
+	sys_log_error("Missing value for mount option \"%s\"%s.", \
+		(name), (suffix))
+
+#define fsapi_options_log_duplicate_definition(name) \
+	sys_log_error("Duplicate definition of mount option \"%s\".", \
+		(name));
+
+#define fsapi_options_log_invalid_value(value_length, value, name, suffix) \
+	sys_log_error("Invalid value \"%" PRIbs "\" for mount option " \
+		"\"%s\"%s.", PRAbs((value_length), (value)), (name), (suffix))
+
+sys_bool fsapi_options_parse_generic_unsigned_integer_value(
+		const char *const name,
+		const u64 max_value,
+		const char *const value,
+		const size_t value_length,
+		u64 *const out_value,
+		sys_bool *const out_value_valid);
+
+int fsapi_options_init(
+		void **const out_custom_mount_options);
+
+void fsapi_options_deinit(
+		void **const custom_mount_optionsp);
+
+int fsapi_options_parse_special_mount_option(
+		const char *const name,
+		const size_t name_length,
+		const char *const value,
+		const size_t value_length,
+		void *const custom_mount_options,
+		sys_bool *const out_parsed);
+
 int fsapi_options_parse_custom_mount_option(
 		const char *name,
 		size_t name_length,
