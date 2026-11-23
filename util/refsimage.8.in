@@ -1,6 +1,6 @@
 .\" Copyright (c) 2025 Erik Larsson
 .\"
-.TH REFSIMAGE 8 "August 2025" "refsprogs @VERSION@"
+.TH REFSIMAGE 8 "August 2025" "OpenReFS @VERSION@"
 .SH NAME
 refsimage - Create and restore ReFS volume images.
 .SH SYNOPSIS
@@ -59,8 +59,8 @@ to a sparse file sdb1.img for inspection/debugging:
 .SH BUGS
 There are no known problems with
 .BR refsimage .
-If you find a bug, then please report it to the refsprogs bug tracker on github:
-https://github.com/unsound/refsprogs/issues
+If you find a bug, then please report it to the OpenReFS bug tracker on github:
+https://github.com/unsound/openrefs/issues
 .hy
 .SH AUTHORS
 .B refsimage
@@ -68,7 +68,7 @@ was written by Erik Larsson
 .SH AVAILABILITY
 .B refsimage
 is part of the
-.B refsprogs
+.B OpenReFS
 package.
 .hy
 .SH SEE ALSO

@@ -1,5 +1,5 @@
-refsprogs
-=========
+OpenReFS
+========
 
 The purpose of this project is to provide utilities for accessing data on ReFS
 volumes. As ReFS lacks documentation the utilites are dependent on independent

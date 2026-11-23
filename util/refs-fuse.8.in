@@ -1,6 +1,6 @@
 .\" Copyright (c) 2022-2025 Erik Larsson
 .\"
-.TH REFS\-FUSE 8 "August 2025" "refsprogs @VERSION@"
+.TH REFS\-FUSE 8 "August 2025" "OpenReFS @VERSION@"
 .SH NAME
 refs\-fuse \- Mount an ReFS volume as a filesystem backed by a FUSE daemon
 .SH SYNOPSIS
@@ -155,8 +155,8 @@ that they rarely clash.
 is currently limited to read-only operation, which isn't technically a bug but
 a design limitation for now.
 
-If you find a bug, then please report it to the refsprogs bug tracker on github:
-https://github.com/unsound/refsprogs/issues
+If you find a bug, then please report it to the OpenReFS bug tracker on github:
+https://github.com/unsound/openrefs/issues
 .hy
 .SH AUTHORS
 .B refs\-fuse
@@ -164,7 +164,7 @@ was written by Erik Larsson
 .SH AVAILABILITY
 .B refs\-fuse
 is part of the
-.B refsprogs
+.B OpenReFS
 package.
 .hy
 .SH SEE ALSO

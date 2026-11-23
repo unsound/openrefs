@@ -1,6 +1,6 @@
 .\" Copyright (c) 2022-2025 Erik Larsson
 .\"
-.TH REFSLABEL 8 "May 2023" "refsprogs @VERSION@"
+.TH REFSLABEL 8 "May 2023" "OpenReFS @VERSION@"
 .SH NAME
 refslabel \- Print the volume label of an ReFS volume.
 .SH SYNOPSIS
@@ -14,8 +14,8 @@ displays the volume label of an ReFS volume.
 .SH BUGS
 There are no known problems with
 .BR refslabel .
-If you find a bug, then please report it to the refsprogs bug tracker on github:
-https://github.com/unsound/refsprogs/issues
+If you find a bug, then please report it to the OpenReFS bug tracker on github:
+https://github.com/unsound/openrefs/issues
 .hy
 .SH AUTHORS
 .B refslabel
@@ -23,7 +23,7 @@ was written by Erik Larsson
 .SH AVAILABILITY
 .B refslabel
 is part of the
-.B refsprogs
+.B OpenReFS
 package.
 .hy
 .SH SEE ALSO
