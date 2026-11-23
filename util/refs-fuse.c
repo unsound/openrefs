@@ -145,8 +145,10 @@ static int refs_fuse_fill_stat(
 #endif /* defined(__APPLE__) */
 
 	if(attributes->valid & FSAPI_NODE_ATTRIBUTE_TYPE_DEVICE_NUMBER) {
+#ifdef makedev
 		stbuf->st_rdev = makedev(attributes->device_number.major,
 			attributes->device_number.minor);
+#endif /* defined(makedev) */
 	}
 
 #ifdef __APPLE__
