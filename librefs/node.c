@@ -1621,6 +1621,7 @@ static int refs_node_get_node_data(
 	else while(bytes_read < node_size) {
 		u8 j;
 		size_t bytes_to_read = bytes_per_read;
+		size_t blocks_to_read = 1;
 
 		if(!logical_blocks[i]) {
 			/* The next logical block is unknown so far. Check the
@@ -1646,6 +1647,13 @@ static int refs_node_get_node_data(
 
 		/* Consolidate contiguous block reads. */
 		for(j = i + 1; j < 4; ++j) {
+			sys_log_debug("i = %" PRIuz ", j = %" PRIuz ", "
+				"physical_blocks[%" PRIuz "] = %" PRIu64 ", "
+				"physical_blocks[%" PRIuz "] = %" PRIu64,
+				PRAuz(i), PRAuz(j),
+				PRAuz(j - 1), PRAu64(physical_blocks[j - 1]),
+				PRAuz(j), PRAu64(physical_blocks[j]));
+
 			if(physical_blocks[j] == physical_blocks[j - 1] + 1) {
 				sys_log_debug("%" PRIuz " -> %" PRIuz ": "
 					"Extending read with contiguous block: "
@@ -1655,6 +1663,7 @@ static int refs_node_get_node_data(
 					PRAuz(bytes_to_read),
 					PRAuz(bytes_to_read + bytes_per_read));
 				bytes_to_read += bytes_per_read;
+				++blocks_to_read;
 			}
 			else {
 				break;
@@ -1694,7 +1703,7 @@ static int refs_node_get_node_data(
 		}
 
 		bytes_read += bytes_to_read;
-		++i;
+		i += blocks_to_read;
 	}
 
 	if(crawl_context->node_cache && !cached_data) {
@@ -14855,7 +14864,12 @@ static int refs_node_crawl_volume_metadata(
 	}
 
 	if(!(sb && *sb)) {
-		u64 logical_block_numbers[4] = { 30, 31, 32, 33 };
+		u64 logical_block_numbers[4] = {
+			30,
+			(cluster_size >= block_size) ? 0 : 31,
+			(cluster_size >= block_size / 2) ? 0 : 32,
+			(cluster_size >= block_size / 2) ? 0 : 33
+		};
 		u64 physical_block_numbers[4] = {
 			logical_block_numbers[0], 
 			logical_block_numbers[1], 
@@ -14941,9 +14955,12 @@ static int refs_node_crawl_volume_metadata(
 		if(!(primary_checkpoint_block && *primary_checkpoint_block)) {
 			u64 logical_block_numbers[4] = {
 				primary_checkpoint_block_number,
-				primary_checkpoint_block_number + 1,
-				primary_checkpoint_block_number + 2,
-				primary_checkpoint_block_number + 3
+				(cluster_size >= block_size) ? 0 :
+					(primary_checkpoint_block_number + 1),
+				(cluster_size >= block_size / 2) ? 0 :
+					(primary_checkpoint_block_number + 2),
+				(cluster_size >= block_size / 2) ? 0 :
+					(primary_checkpoint_block_number + 3)
 			};
 			u64 physical_block_numbers[4] = {
 				logical_block_numbers[0], 
@@ -15013,9 +15030,12 @@ static int refs_node_crawl_volume_metadata(
 		{
 			u64 logical_block_numbers[4] = {
 				secondary_checkpoint_block_number,
-				secondary_checkpoint_block_number + 1,
-				secondary_checkpoint_block_number + 2,
-				secondary_checkpoint_block_number + 3
+				(cluster_size >= block_size) ? 0 :
+					(secondary_checkpoint_block_number + 1),
+				(cluster_size >= block_size / 2) ? 0 :
+					(secondary_checkpoint_block_number + 2),
+				(cluster_size >= block_size / 2) ? 0 :
+					(secondary_checkpoint_block_number + 3)
 			};
 			u64 physical_block_numbers[4] = {
 				logical_block_numbers[0], 
