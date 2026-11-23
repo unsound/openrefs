@@ -59,7 +59,9 @@
 #define SYS_LOG_PROFILING 0
 #endif
 
-typedef struct sys_iohandler sys_iohandler;
+typedef struct sys_iotarget sys_iotarget;
+
+typedef struct sys_iosource sys_iosource;
 
 #if SYS_LOG_INDENT
 #ifndef SYS_LOG_INDENT_SIZE
@@ -526,10 +528,10 @@ static inline void __sys_log_pnoop(int err, const char *const fmt, ...)
 #endif /* !defined(PRIb64) ... */
 
 /**
- * The handler of an I/O operation, implementing a method to process it.
+ * The target handler of an I/O operation, implementing a method to process it.
  */
-struct sys_iohandler {
-	/** The context that is passed to @ref fsapi_iohandler::handle_io. */
+struct sys_iotarget {
+	/** The context that is passed to all callbacks. */
 	void *context;
 
 	/**
@@ -563,6 +565,28 @@ struct sys_iohandler {
 	int (*copy_data)(
 		void *context,
 		const void *data,
+		size_t size);
+
+};
+
+/**
+ * The source handler of an I/O operation, implementing a method to retrieve
+ * the I/O.
+ */
+struct sys_iosource {
+	/** The context that is passed to all callbacks. */
+	void *context;
+
+	/**
+	 * The I/O handler callback function.
+	 *
+	 * Accepts a device, offset and size and processes I/O as implemented by
+	 * the handler.
+	 */
+	int (*handle_io)(
+		void *context,
+		sys_device *dev,
+		u64 offset,
 		size_t size);
 
 	/**

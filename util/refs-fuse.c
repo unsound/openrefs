@@ -486,12 +486,12 @@ static int refs_fuse_op_read(const char *path, char *buf, size_t size,
 	int err = 0;
 	fsapi_node *node = NULL;
 	fsapi_node_attributes attributes;
-	fsapi_iohandler_buffer_context context;
-	fsapi_iohandler iohandler;
+	fsapi_iotarget_buffer_context context;
+	sys_iotarget iotarget;
 
 	memset(&attributes, 0, sizeof(attributes));
 	memset(&context, 0, sizeof(context));
-	memset(&iohandler, 0, sizeof(iohandler));
+	memset(&iotarget, 0, sizeof(iotarget));
 
 	sys_log_debug("%s(path=\"%s\", buf=%p, size=%" PRIuz ", "
 		"offset=%" PRId64 ", fi=%p)",
@@ -522,12 +522,11 @@ static int refs_fuse_op_read(const char *path, char *buf, size_t size,
 		goto out;
 	}
 
-	context.buf.rw = buf;
+	context.buf = buf;
 	context.remaining_size = bytes_to_read;
-	context.is_read = SYS_TRUE;
-	iohandler.context = &context;
-	iohandler.handle_io = fsapi_iohandler_buffer_handle_io;
-	iohandler.copy_data = fsapi_iohandler_buffer_copy_data;
+	iotarget.context = &context;
+	iotarget.handle_io = fsapi_iotarget_buffer_handle_io;
+	iotarget.copy_data = fsapi_iotarget_buffer_copy_data;
 
 	err = fsapi_node_read(
 		/* fsapi_volume *vol */
@@ -538,8 +537,8 @@ static int refs_fuse_op_read(const char *path, char *buf, size_t size,
 		offset,
 		/* size_t size */
 		bytes_to_read,
-		/* fsapi_iohandler *iohandler */
-		&iohandler);
+		/* sys_iotarget *iotarget */
+		&iotarget);
 out:
 	if(node) {
 		fsapi_node_release(
@@ -849,12 +848,12 @@ static int refs_fuse_op_getxattr(const char *path, const char *name, char *buf,
 
 	int err = 0;
 	fsapi_node *node = NULL;
-	fsapi_iohandler_buffer_context buffer_context;
-	fsapi_iohandler iohandler;
+	fsapi_iotarget_buffer_context buffer_context;
+	sys_iotarget iotarget;
 	u64 xattr_size = 0;
 
 	memset(&buffer_context, 0, sizeof(buffer_context));
-	memset(&iohandler, 0, sizeof(iohandler));
+	memset(&iotarget, 0, sizeof(iotarget));
 
 	sys_log_debug("%s(path=\"%s\", name=\"%s\", buf=%p, "
 		"size=%" PRIuz ", position=%" PRIu32 ")",
@@ -882,13 +881,12 @@ static int refs_fuse_op_getxattr(const char *path, const char *name, char *buf,
 	}
 
 	if(size) {
-		buffer_context.buf.rw = buf;
+		buffer_context.buf = buf;
 		buffer_context.remaining_size = bytes_to_read;
-		buffer_context.is_read = SYS_TRUE;
 
-		iohandler.context = &buffer_context;
-		iohandler.handle_io = fsapi_iohandler_buffer_handle_io;
-		iohandler.copy_data = fsapi_iohandler_buffer_copy_data;
+		iotarget.context = &buffer_context;
+		iotarget.handle_io = fsapi_iotarget_buffer_handle_io;
+		iotarget.copy_data = fsapi_iotarget_buffer_copy_data;
 	}
 
 	err = fsapi_node_read_extended_attribute(
@@ -904,8 +902,8 @@ static int refs_fuse_op_getxattr(const char *path, const char *name, char *buf,
 		position,
 		/* size_t size */
 		bytes_to_read,
-		/* fsapi_iohandler *iohandler */
-		size ? &iohandler : NULL,
+		/* sys_iotarget *iotarget */
+		size ? &iotarget : NULL,
 		/* u64 *out_xattr_size */
 		size ? NULL : &xattr_size);
 	if(err == ENOENT) {
@@ -1724,11 +1722,11 @@ static void refs_fuse_ll_op_read(
 
 	int err = 0;
 	void *buf = NULL;
-	fsapi_iohandler_buffer_context iohandler_context;
-	fsapi_iohandler iohandler;
+	fsapi_iotarget_buffer_context iotarget_context;
+	sys_iotarget iotarget;
 
-	memset(&iohandler_context, 0, sizeof(iohandler_context));
-	memset(&iohandler, 0, sizeof(iohandler));
+	memset(&iotarget_context, 0, sizeof(iotarget_context));
+	memset(&iotarget, 0, sizeof(iotarget));
 
 	sys_log_debug("%s(req=%p, ino=0x%" PRIX64 ", size=%" PRIuz ", "
 		"off=%" PRId64 ", fi=%p)",
@@ -1739,12 +1737,11 @@ static void refs_fuse_ll_op_read(
 		goto out;
 	}
 
-	iohandler_context.buf.rw = buf;
-	iohandler_context.remaining_size = size;
-	iohandler_context.is_read = SYS_TRUE;
-	iohandler.context = &iohandler_context;
-	iohandler.handle_io = fsapi_iohandler_buffer_handle_io;
-	iohandler.copy_data = fsapi_iohandler_buffer_copy_data;
+	iotarget_context.buf = buf;
+	iotarget_context.remaining_size = size;
+	iotarget.context = &iotarget_context;
+	iotarget.handle_io = fsapi_iotarget_buffer_handle_io;
+	iotarget.copy_data = fsapi_iotarget_buffer_copy_data;
 
 	err = fsapi_node_read(
 		/* fsapi_volume *vol */
@@ -1755,8 +1752,8 @@ static void refs_fuse_ll_op_read(
 		off,
 		/* size_t size */
 		size,
-		/* fsapi_iohandler *iohandler */
-		&iohandler);
+		/* sys_iotarget *iotarget */
+		&iotarget);
 out:
 	sys_log_debug("%s(req=%p, ino=0x%" PRIX64 ", size=%" PRIuz ", "
 		"off=%" PRId64 ", fi=%p): %" PRIdz " (%s)",
@@ -1768,7 +1765,7 @@ out:
 	}
 	else {
 		fuse_reply_buf(req, buf,
-			size - iohandler_context.remaining_size);
+			size - iotarget_context.remaining_size);
 	}
 
 	if(buf) {
@@ -2132,12 +2129,12 @@ static void refs_fuse_ll_op_getxattr(
 
 	int err = 0;
 	void *buf = NULL;
-	fsapi_iohandler_buffer_context buffer_context;
-	fsapi_iohandler iohandler;
+	fsapi_iotarget_buffer_context buffer_context;
+	sys_iotarget iotarget;
 	u64 xattr_size = 0;
 
 	memset(&buffer_context, 0, sizeof(buffer_context));
-	memset(&iohandler, 0, sizeof(iohandler));
+	memset(&iotarget, 0, sizeof(iotarget));
 
 	sys_log_debug("%s(req=%p, ino=0x%" PRIX64 ", name=\"%s\", "
 		"size=%" PRIuz ", position=%" PRIu32 ")",
@@ -2150,13 +2147,12 @@ static void refs_fuse_ll_op_getxattr(
 			goto out;
 		}
 
-		buffer_context.buf.rw = buf;
+		buffer_context.buf = buf;
 		buffer_context.remaining_size = size;
-		buffer_context.is_read = SYS_TRUE;
 
-		iohandler.context = &buffer_context;
-		iohandler.handle_io = fsapi_iohandler_buffer_handle_io;
-		iohandler.copy_data = fsapi_iohandler_buffer_copy_data;
+		iotarget.context = &buffer_context;
+		iotarget.handle_io = fsapi_iotarget_buffer_handle_io;
+		iotarget.copy_data = fsapi_iotarget_buffer_copy_data;
 	}
 
 	err = fsapi_node_read_extended_attribute(
@@ -2172,8 +2168,8 @@ static void refs_fuse_ll_op_getxattr(
 		position,
 		/* size_t size */
 		size,
-		/* fsapi_iohandler *iohandler */
-		buf ? &iohandler : NULL,
+		/* sys_iotarget *iotarget */
+		buf ? &iotarget : NULL,
 		/* u64 *out_xattr_size */
 		buf ? NULL : &xattr_size);
 	if(err == ENOENT) {

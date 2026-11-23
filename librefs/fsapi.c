@@ -2889,123 +2889,143 @@ out:
 	return err;
 }
 
-int fsapi_iohandler_buffer_handle_io(
-		void *_context,
-		sys_device *dev,
-		u64 offset,
-		size_t size)
+int fsapi_iotarget_buffer_handle_io(
+		void *const _context,
+		sys_device *const dev,
+		const u64 offset,
+		const size_t size)
 {
-	fsapi_iohandler_buffer_context *const context =
-		(fsapi_iohandler_buffer_context*) _context;
+	fsapi_iotarget_buffer_context *const context =
+		(fsapi_iotarget_buffer_context*) _context;
 	const size_t bytes_to_transfer =
 		sys_min(context->remaining_size, size);
 
 	int err = 0;
 
-	sys_log_debug("Handle I/O requested for offset %" PRIu64 " and size "
-		"%" PRIuz "...", PRAu64(offset), PRAuz(size));
-	if(context->is_read) {
-		if(offset % 4096 || bytes_to_transfer % 4096) {
-			const size_t buf_size =
-				((offset + bytes_to_transfer + 4095) / 4096 -
-				offset / 4096) * 4096;
-			char *buf = NULL;
+	sys_log_debug("Handle target I/O requested for offset %" PRIu64 " and "
+		"size %" PRIuz "...", PRAu64(offset), PRAuz(size));
+	if(offset % 4096 || bytes_to_transfer % 4096) {
+		const size_t buf_size =
+			((offset + bytes_to_transfer + 4095) / 4096 -
+			offset / 4096) * 4096;
+		char *buf = NULL;
 
-			sys_log_debug("Doing buffered read for alignment.");
+		sys_log_debug("Doing buffered read for alignment.");
 
-			err = sys_malloc(buf_size, &buf);
-			if(err) {
-				goto out;
-			}
-
-			err = sys_device_pread(
-				/* sys_device *dev */
-				dev,
-				/* u64 offset */
-				offset,
-				/* size_t nbytes */
-				buf_size,
-				/* void *buf */
-				buf);
-			if(!err) {
-				memcpy(context->buf.rw, &buf[offset % 4096],
-					bytes_to_transfer);
-			}
-
-			sys_free(buf_size, &buf);
-		}
-		else {
-			err = sys_device_pread(
-				/* sys_device *dev */
-				dev,
-				/* u64 offset */
-				offset,
-				/* size_t nbytes */
-				bytes_to_transfer,
-				/* void *buf */
-				context->buf.rw);
-		}
+		err = sys_malloc(buf_size, &buf);
 		if(err) {
-			sys_log_perror(err, "sys_device_pread threw error");
 			goto out;
 		}
 
-		context->buf.rw = &context->buf.rw[bytes_to_transfer];
+		err = sys_device_pread(
+			/* sys_device *dev */
+			dev,
+			/* u64 offset */
+			offset,
+			/* size_t nbytes */
+			buf_size,
+			/* void *buf */
+			buf);
+		if(!err) {
+			memcpy(context->buf, &buf[offset % 4096],
+				bytes_to_transfer);
+		}
+
+		sys_free(buf_size, &buf);
 	}
 	else {
-#if 1
-		sys_log_critical("Writing is not supported yet.");
-		err = ENOTSUP;
-#else
-		err = sys_device_pwrite(
+		err = sys_device_pread(
 			/* sys_device *dev */
 			dev,
 			/* u64 offset */
 			offset,
 			/* size_t nbytes */
 			bytes_to_transfer,
-			/* conte void *buf */
-			context->buf.ro);
-		if(err) {
-			goto out;
-		}
-
-		context->buf.ro = &context->buf.ro[bytes_to_transfer];
-#endif
+			/* void *buf */
+			context->buf);
 	}
+	if(err) {
+		sys_log_perror(err, "sys_device_pread threw error");
+		goto out;
+	}
+
+	context->buf = &context->buf[bytes_to_transfer];
 
 	context->remaining_size -= bytes_to_transfer;
 out:
 	return err;
 }
 
-int fsapi_iohandler_buffer_copy_data(
-		void *_context,
-		const void *buffer,
-		size_t size)
+int fsapi_iotarget_buffer_copy_data(
+		void *const _context,
+		const void *const buffer,
+		const size_t size)
 {
-	fsapi_iohandler_buffer_context *const context =
-		(fsapi_iohandler_buffer_context*) _context;
+	fsapi_iotarget_buffer_context *const context =
+		(fsapi_iotarget_buffer_context*) _context;
 	const size_t bytes_to_copy = sys_min(size, context->remaining_size);
 
-	memcpy(context->buf.rw, buffer, bytes_to_copy);
-	context->buf.rw = &context->buf.rw[bytes_to_copy];
+	memcpy(context->buf, buffer, bytes_to_copy);
+	context->buf = &context->buf[bytes_to_copy];
 	context->remaining_size -= bytes_to_copy;
 
 	return 0;
 }
 
-int fsapi_iohandler_buffer_get_data(
-		void *_context,
-		void *buffer,
-		size_t size)
+int fsapi_iosource_buffer_handle_io(
+		void *const _context,
+		sys_device *const dev,
+		const u64 offset,
+		const size_t size)
 {
-	fsapi_iohandler_buffer_context *const context =
-		(fsapi_iohandler_buffer_context*) _context;
+#if 0
+	fsapi_iosource_buffer_context *const context =
+		(fsapi_iosource_buffer_context*) _context;
+	const size_t bytes_to_transfer =
+		sys_min(context->remaining_size, size);
+#endif
+
+	int err = 0;
+
+	sys_log_debug("Handle source I/O requested for offset %" PRIu64 " and "
+		"size %" PRIuz "...", PRAu64(offset), PRAuz(size));
+
+#if 1
+	sys_log_critical("Writing is not supported yet.");
+	err = ENOTSUP;
+#else
+	err = sys_device_pwrite(
+		/* sys_device *dev */
+		dev,
+		/* u64 offset */
+		offset,
+		/* size_t nbytes */
+		bytes_to_transfer,
+		/* conte void *buf */
+		context->buf);
+	if(err) {
+		goto out;
+	}
+
+	context->buf = &context->buf[bytes_to_transfer];
+
+	context->remaining_size -= bytes_to_transfer;
+out:
+#endif
+	return err;
+}
+
+int fsapi_iosource_buffer_get_data(
+		void *const _context,
+		void *const buffer,
+		const size_t size)
+{
+	fsapi_iosource_buffer_context *const context =
+		(fsapi_iosource_buffer_context*) _context;
 	const size_t bytes_to_copy = sys_min(size, context->remaining_size);
 
-	memcpy(buffer, context->buf.ro, bytes_to_copy);
-	context->buf.ro = &context->buf.ro[bytes_to_copy];
+	memcpy(buffer, context->buf, bytes_to_copy);
+	context->buf = &context->buf[bytes_to_copy];
 	context->remaining_size -= bytes_to_copy;
 
 	return 0;
@@ -4350,7 +4370,7 @@ out:
 
 typedef struct {
 	refs_volume *vol;
-	fsapi_iohandler *iohandler;
+	sys_iotarget *iotarget;
 	size_t size;
 	sys_bool is_sparse;
 	u64 cur_offset;
@@ -4369,12 +4389,12 @@ static int fsapi_node_read_zeroes(
 
 	memset(zero_data, 0, sizeof(zero_data));
 
-	if(is_hole && context->iohandler->handle_hole) {
+	if(is_hole && context->iotarget->handle_hole) {
 		/* We have encountered a hole and the caller has a handler for
 		 * it. Call the 'handle_hole' callback. */
-		err = context->iohandler->handle_hole(
+		err = context->iotarget->handle_hole(
 			/* void *context */
-			context->iohandler->context,
+			context->iotarget->context,
 			/* size_t size */
 			bytes_to_zero);
 		goto out;
@@ -4386,9 +4406,9 @@ static int fsapi_node_read_zeroes(
 		const size_t cur_bytes_to_zero =
 			sys_min(sizeof(zero_data), remaining_bytes_to_zero);
 
-		err = context->iohandler->copy_data(
+		err = context->iotarget->copy_data(
 			/* void *context */
-			context->iohandler->context,
+			context->iotarget->context,
 			/* const void *data */
 			zero_data,
 			/* size_t size */
@@ -4559,9 +4579,9 @@ static int fsapi_node_read_visit_file_extent(
 	sys_log_debug("Reading %" PRIuz " bytes...",
 		PRAuz(bytes_to_read));
 
-	err = context->iohandler->handle_io(
+	err = context->iotarget->handle_io(
 		/* void *context */
-		context->iohandler->context,
+		context->iotarget->context,
 		/* sys_device *dev */
 		context->vol->dev,
 		/* u64 offset */
@@ -4601,9 +4621,9 @@ static int fsapi_node_read_visit_file_data(
 	bytes_to_copy =
 		sys_min(context->size, size - (size_t) context->start_offset);
 
-	err = context->iohandler->copy_data(
+	err = context->iotarget->copy_data(
 		/* void *context */
-		context->iohandler->context,
+		context->iotarget->context,
 		/* sys_device *dev */
 		data,
 		/* size_t size */
@@ -4666,11 +4686,11 @@ static sys_bool fsapi_node_read_should_add_extent_subnode(
 }
 
 int fsapi_node_read(
-		fsapi_volume *vol,
-		fsapi_node *node,
-		u64 offset,
-		size_t size,
-		fsapi_iohandler *iohandler)
+		fsapi_volume *const vol,
+		fsapi_node *const node,
+		const u64 offset,
+		const size_t size,
+		sys_iotarget *const iotarget)
 {
 	int err = 0;
 	fsapi_node_read_context context;
@@ -4681,11 +4701,11 @@ int fsapi_node_read(
 	memset(&visitor, 0, sizeof(visitor));
 
 	fsapi_log_enter("vol=%p, node=%p, offset=%" PRIu64 ", "
-		"size=%" PRIuz ", iohandler=%p",
-		vol, node, PRAu64(offset), PRAuz(size), iohandler);
+		"size=%" PRIuz ", iotarget=%p",
+		vol, node, PRAu64(offset), PRAuz(size), iotarget);
 
 	context.vol = vol->vol;
-	context.iohandler = iohandler;
+	context.iotarget = iotarget;
 	context.size = size;
 	context.cur_offset = offset;
 	context.start_offset = offset;
@@ -4772,36 +4792,36 @@ int fsapi_node_read(
 	}
 out:
 	fsapi_log_leave(err, "vol=%p, node=%p, offset=%" PRIu64 ", "
-		"size=%" PRIuz ", iohandler=%p",
-		vol, node, PRAu64(offset), PRAuz(size), iohandler);
+		"size=%" PRIuz ", iotarget=%p",
+		vol, node, PRAu64(offset), PRAuz(size), iotarget);
 
 	return err;
 }
 
 int fsapi_node_write(
-		fsapi_volume *vol,
-		fsapi_node *node,
-		u64 offset,
-		size_t size,
-		fsapi_iohandler *iohandler)
+		fsapi_volume *const vol,
+		fsapi_node *const node,
+		const u64 offset,
+		const size_t size,
+		sys_iosource *const iosource)
 {
 	int err;
 
 	fsapi_log_enter("vol=%p, node=%p, offset=%" PRIu64 ", "
-		"size=%" PRIuz ", iohandler=%p",
-		vol, node, PRAu64(offset), PRAuz(size), iohandler);
+		"size=%" PRIuz ", iosource=%p",
+		vol, node, PRAu64(offset), PRAuz(size), iosource);
 
 	(void) vol;
 	(void) node;
 	(void) offset;
 	(void) size;
-	(void) iohandler;
+	(void) iosource;
 
 	err = EROFS;
 
 	fsapi_log_leave(err, "vol=%p, node=%p, offset=%" PRIu64 ", "
-		"size=%" PRIuz ", iohandler=%p",
-		vol, node, PRAu64(offset), PRAuz(size), iohandler);
+		"size=%" PRIuz ", iosource=%p",
+		vol, node, PRAu64(offset), PRAuz(size), iosource);
 
 	return err;
 }
@@ -5223,7 +5243,7 @@ typedef struct {
 	size_t xattr_name_length;
 	u64 offset;
 	size_t size;
-	fsapi_iohandler *iohandler;
+	sys_iotarget *iotarget;
 	fsapi_node_pseudo_extended_attribute_type requested_metadata;
 	sys_bool stream_found;
 	u64 stream_non_resident_id;
@@ -5265,15 +5285,15 @@ static int fsapi_node_read_extended_attribute_visit_entry(
 			flags |= REFS_FILE_ATTRIBUTE_NORMAL;
 		}
 
-		if(!context->iohandler) {
+		if(!context->iotarget) {
 			context->remaining_bytes = context->stream_size;
 		}
 		else if(little_endian) {
 			const le32 flags_le = cpu_to_le32(flags);
 
-			err = context->iohandler->copy_data(
+			err = context->iotarget->copy_data(
 				/* void *context */
-				context->iohandler->context,
+				context->iotarget->context,
 				/* const void *data */
 				&flags_le,
 				/* size_t size */
@@ -5287,9 +5307,9 @@ static int fsapi_node_read_extended_attribute_visit_entry(
 		else {
 			const be32 flags_be = cpu_to_be32(flags);
 
-			err = context->iohandler->copy_data(
+			err = context->iotarget->copy_data(
 				/* void *context */
-				context->iohandler->context,
+				context->iotarget->context,
 				/* const void *data */
 				&flags_be,
 				/* size_t size */
@@ -5314,10 +5334,10 @@ static int fsapi_node_read_extended_attribute_visit_entry(
 		context->stream_found = SYS_TRUE;
 		context->stream_size = sizeof(times);
 
-		if(context->iohandler) {
-			err = context->iohandler->copy_data(
+		if(context->iotarget) {
+			err = context->iotarget->copy_data(
 				/* void *context */
-				context->iohandler->context,
+				context->iotarget->context,
 				/* const void *data */
 				times,
 				/* size_t size */
@@ -5345,10 +5365,10 @@ static int fsapi_node_read_extended_attribute_visit_entry(
 		context->stream_found = SYS_TRUE;
 		context->stream_size = sizeof(times);
 
-		if(context->iohandler) {
-			err = context->iohandler->copy_data(
+		if(context->iotarget) {
+			err = context->iotarget->copy_data(
 				/* void *context */
-				context->iohandler->context,
+				context->iotarget->context,
 				/* const void *data */
 				times,
 				/* size_t size */
@@ -5371,10 +5391,10 @@ static int fsapi_node_read_extended_attribute_visit_entry(
 		context->stream_found = SYS_TRUE;
 		context->stream_size = sizeof(create_time_le);
 
-		if(context->iohandler) {
-			err = context->iohandler->copy_data(
+		if(context->iotarget) {
+			err = context->iotarget->copy_data(
 				/* void *context */
-				context->iohandler->context,
+				context->iotarget->context,
 				/* const void *data */
 				&create_time_le,
 				/* size_t size */
@@ -5395,10 +5415,10 @@ static int fsapi_node_read_extended_attribute_visit_entry(
 		context->stream_found = SYS_TRUE;
 		context->stream_size = sizeof(create_time_be);
 
-		if(context->iohandler) {
-			err = context->iohandler->copy_data(
+		if(context->iotarget) {
+			err = context->iotarget->copy_data(
 				/* void *context */
-				context->iohandler->context,
+				context->iotarget->context,
 				/* const void *data */
 				&create_time_be,
 				/* size_t size */
@@ -5468,10 +5488,10 @@ static int fsapi_node_read_extended_attribute_visit_ea_full(
 		context->stream_found = SYS_TRUE;
 		context->stream_size = data_size;
 
-		if(context->iohandler) {
-			err = context->iohandler->copy_data(
+		if(context->iotarget) {
+			err = context->iotarget->copy_data(
 				/* void *context */
-				context->iohandler->context,
+				context->iotarget->context,
 				/* const void *data */
 				data,
 				/* size_t size */
@@ -5521,10 +5541,10 @@ static int fsapi_node_read_extended_attribute_visit_ea(
 	context->stream_size = data_size;
 	context->remaining_bytes = data_size;
 
-	if(context->iohandler) {
-		err = context->iohandler->copy_data(
+	if(context->iotarget) {
+		err = context->iotarget->copy_data(
 			/* void *context */
-			context->iohandler->context,
+			context->iotarget->context,
 			/* const void *data */
 			data,
 			/* size_t size */
@@ -5567,11 +5587,11 @@ static int fsapi_node_read_extended_attribute_visit_stream(
 	}
 	context->stream_size = data_size;
 
-	if(!context->iohandler);
+	if(!context->iotarget);
 	else if(data_reference->resident) {
-		err = context->iohandler->copy_data(
+		err = context->iotarget->copy_data(
 			/* void *context */
-			context->iohandler->context,
+			context->iotarget->context,
 			/* const void *data */
 			data_reference->data.resident,
 			/* size_t size */
@@ -5627,9 +5647,9 @@ static int fsapi_node_read_extended_attribute_visit_stream_extent(
 	 * to be sparse? */
 	(void) first_logical_block;
 
-	err = context->iohandler->handle_io(
+	err = context->iotarget->handle_io(
 		/* void *context */
-		context->iohandler->context,
+		context->iotarget->context,
 		/* sys_device *dev */
 		context->vol->dev,
 		/* u64 offset */
@@ -5664,10 +5684,10 @@ static int fsapi_node_read_extended_attribute_visit_reparse_data(
 		context->stream_found = SYS_TRUE;
 		context->stream_size = data_size;
 
-		if(context->iohandler) {
-			err = context->iohandler->copy_data(
+		if(context->iotarget) {
+			err = context->iotarget->copy_data(
 				/* void *context */
-				context->iohandler->context,
+				context->iotarget->context,
 				/* const void *data */
 				data,
 				/* size_t size */
@@ -5695,14 +5715,14 @@ out:
 }
 
 int fsapi_node_read_extended_attribute(
-		fsapi_volume *vol,
-		fsapi_node *node,
-		const char *xattr_name,
-		size_t xattr_name_length,
-		u64 offset,
-		size_t size,
-		fsapi_iohandler *iohandler,
-		u64 *out_xattr_size)
+		fsapi_volume *const vol,
+		fsapi_node *const node,
+		const char *const xattr_name,
+		const size_t xattr_name_length,
+		const u64 offset,
+		const size_t size,
+		sys_iotarget *const iotarget,
+		u64 *const out_xattr_size)
 {
 	int err = 0;
 
@@ -5719,13 +5739,13 @@ int fsapi_node_read_extended_attribute(
 
 	fsapi_log_enter("vol=%p, node=%p, xattr_name=%p (->%.*s), "
 		"xattr_name_length=%" PRIuz ", offset=%" PRIu64 ", "
-		"size=%" PRIuz ", iohandler=%p, out_xattr_size=%p "
+		"size=%" PRIuz ", iotarget=%p, out_xattr_size=%p "
 		"(->%" PRIu64 ")",
 		vol, node, xattr_name,
 		xattr_name ? (int) sys_min(xattr_name_length, INT_MAX) : 0,
 		xattr_name ? xattr_name : "",
 		PRAuz(xattr_name_length), PRAu64(offset), PRAuz(size),
-		iohandler, out_xattr_size,
+		iotarget, out_xattr_size,
 		PRAu64(out_xattr_size ? *out_xattr_size : 0));
 
 	if((!node->key || !node->record) || node->is_short_entry) {
@@ -5741,7 +5761,7 @@ int fsapi_node_read_extended_attribute(
 	context.xattr_name_length = xattr_name_length;
 	context.offset = offset;
 	context.size = size;
-	context.iohandler = iohandler;
+	context.iotarget = iotarget;
 	context.requested_metadata =
 		FSAPI_NODE_PSEUDO_EXTENDED_ATTRIBUTE_TYPE_NONE;
 	visitor.context = &context;
@@ -5958,38 +5978,38 @@ int fsapi_node_read_extended_attribute(
 out:
 	fsapi_log_leave(err, "vol=%p, node=%p, xattr_name=%p (->%.*s), "
 		"xattr_name_length=%" PRIuz ", offset=%" PRIu64 ", "
-		"size=%" PRIuz ", iohandler=%p, out_xattr_size=%p "
+		"size=%" PRIuz ", iotarget=%p, out_xattr_size=%p "
 		"(->%" PRIu64 ")",
 		vol, node, xattr_name,
 		xattr_name ? (int) sys_min(xattr_name_length, INT_MAX) : 0,
 		xattr_name ? xattr_name : "",
 		PRAuz(xattr_name_length), PRAu64(offset), PRAuz(size),
-		iohandler, out_xattr_size,
+		iotarget, out_xattr_size,
 		PRAu64(out_xattr_size ? *out_xattr_size : 0));
 
 	return err;
 }
 
 int fsapi_node_write_extended_attribute(
-		fsapi_volume *vol,
-		fsapi_node *node,
-		const char *xattr_name,
-		size_t xattr_name_length,
-		fsapi_node_extended_attribute_flags flags,
-		u64 offset,
-		size_t size,
-		fsapi_iohandler *iohandler)
+		fsapi_volume *const vol,
+		fsapi_node *const node,
+		const char *const xattr_name,
+		const size_t xattr_name_length,
+		const fsapi_node_extended_attribute_flags flags,
+		const u64 offset,
+		const size_t size,
+		sys_iosource *const iosource)
 {
 	int err;
 
 	fsapi_log_enter("vol=%p, node=%p, xattr_name=%p (->%.*s), "
 		"xattr_name_length=%" PRIuz ", flags=0x%X, offset=%" PRIu64 ", "
-		"size=%" PRIuz ", iohandler=%p",
+		"size=%" PRIuz ", iosource=%p",
 		vol, node, xattr_name,
 		xattr_name ? (int) sys_min(xattr_name_length, INT_MAX) : 0,
 		xattr_name ? xattr_name : "",
 		PRAuz(xattr_name_length), flags, PRAu64(offset), PRAuz(size),
-		iohandler);
+		iosource);
 
 	(void) vol;
 	(void) node;
@@ -5998,18 +6018,18 @@ int fsapi_node_write_extended_attribute(
 	(void) flags;
 	(void) offset;
 	(void) size;
-	(void) iohandler;
+	(void) iosource;
 
 	err = EROFS;
 
 	fsapi_log_leave(err, "vol=%p, node=%p, xattr_name=%p (->%.*s), "
 		"xattr_name_length=%" PRIuz ", flags=0x%X, offset=%" PRIu64 ", "
-		"size=%" PRIuz ", iohandler=%p",
+		"size=%" PRIuz ", iosource=%p",
 		vol, node, xattr_name,
 		xattr_name ? (int) sys_min(xattr_name_length, INT_MAX) : 0,
 		xattr_name ? xattr_name : "",
 		PRAuz(xattr_name_length), flags, PRAu64(offset), PRAuz(size),
-		iohandler);
+		iosource);
 
 	return err;
 }
