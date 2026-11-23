@@ -963,7 +963,6 @@ static ssize_t fsapi_linux_file_op_aio_read(
 #if 0
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3,16,0))
 static ssize_t fsapi_linux_file_op_write_iter(
-static ssize_t fsapi_linux_file_op_write_iter(
 		struct kiocb *const iocb,
 		struct iov_iter *const from);
 #else /* LINUX_VERSION_CODE < KERNEL_VERSION(3,16,0) */
@@ -2590,25 +2589,28 @@ static void fsapi_linux_attributes_to_inode(
 	else {
 		set_nlink(ino, attributes->is_directory ? 3 : 1);
 	}
-#if 0
 	if(attributes->valid & FSAPI_NODE_ATTRIBUTE_TYPE_ALLOCATION_BLOCK_SIZE)
 	{
-		ino->i_blkbits = ffs(attributes->allocation_block_size);
+		ino->i_blkbits =
+			ffs((u32) (attributes->allocation_block_size >> 32));
+		if(ino->i_blkbits) {
+			ino->i_blkbits += 32;
+		}
+		else {
+			ino->i_blkbits =
+				ffs((u32) attributes->allocation_block_size);
+		}
 	}
-	else
-#endif
-	{
-		ino->i_blkbits = PAGE_SHIFT;
+	else {
+		ino->i_blkbits = ffs(128UL * 1024UL);
 	}
 	if(attributes->valid & FSAPI_NODE_ATTRIBUTE_TYPE_INODE_NUMBER) {
 		ino->i_ino = attributes->inode_number;
 	}
-#if 0
 	if(attributes->valid & FSAPI_NODE_ATTRIBUTE_TYPE_DEVICE_NUMBER) {
-		rdev = MKDEV(attributes->device_number_major,
-			attributes->device_number_minor);
+		rdev = MKDEV(attributes->device_number.major,
+			attributes->device_number.minor);
 	}
-#endif
 	if(attributes->valid & FSAPI_NODE_ATTRIBUTE_TYPE_UID) {
 		ino->i_uid = KUIDT_INIT(attributes->uid);
 	}

@@ -43,3 +43,5 @@ refs-fuse
 ---------
 A FUSE driver interface to librefs allowing direct access to ReFS volumes by
 mounting them in the filesystem.
+
+In addition, an experimental Linux kernel driver exists in targets/linux.

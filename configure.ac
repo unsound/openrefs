@@ -156,7 +156,10 @@ AC_CHECK_HEADERS([ \
 	sys/disk.h \
 	sys/ioctl.h \
 	sys/stat.h \
+	sys/types.h \
 ])
+
+AC_HEADER_MAJOR
 
 AC_CHECK_HEADERS(
 	[pthread.h],

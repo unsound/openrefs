@@ -36,6 +36,15 @@ typedef unsigned int mode_t;
 #define REFS_FUSE_USE_LOWLEVEL_API 0
 #endif
 
+/* Headers - UNIX/POSIX */
+#ifdef MAJOR_IN_MKDEV
+#include <sys/mkdev.h>
+#elif MAJOR_IN_SYSMACROS
+#include <sys/sysmacros.h>
+#elif defined(HAVE_SYS_TYPES_H)
+#include <sys/types.h>
+#endif
+
 /* Headers - libfuse. */
 #if defined(__NetBSD__)
 /* Work around librefuse compile error due to missing kernel types. */
@@ -135,6 +144,11 @@ static int refs_fuse_fill_stat(
 	}
 #endif /* defined(__APPLE__) */
 
+	if(attributes->valid & FSAPI_NODE_ATTRIBUTE_TYPE_DEVICE_NUMBER) {
+		stbuf->st_rdev = makedev(attributes->device_number.major,
+			attributes->device_number.minor);
+	}
+
 #ifdef __APPLE__
 	/* Compatibility timestamp aliases for macOS. */
 #define st_atim st_atimespec
@@ -178,6 +192,12 @@ static int refs_fuse_fill_stat(
 
 	if(attributes->valid & FSAPI_NODE_ATTRIBUTE_TYPE_SIZE) {
 		stbuf->st_size = attributes->size;
+	}
+
+	if(attributes->valid & FSAPI_NODE_ATTRIBUTE_TYPE_ALLOCATION_BLOCK_SIZE)
+	{
+		stbuf->st_blksize =
+			(blksize_t) attributes->allocation_block_size;
 	}
 
 	if(attributes->valid & FSAPI_NODE_ATTRIBUTE_TYPE_ALLOCATED_SIZE) {

@@ -336,6 +336,11 @@ static int refsls_print_dirent(
 				"subdirectory");
 		}
 
+		if(subdir_ctx.cur_name) {
+			sys_free(subdir_ctx.cur_name_length + 1,
+				&subdir_ctx.cur_name);
+		}
+
 		sys_free(subdir_prefix_string_length, &subdir_ctx.prefix);
 
 		if(err) {

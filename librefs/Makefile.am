@@ -31,6 +31,7 @@ librefs_la_LIBADD  = \
 	$(COMMON_LIBS)
 librefs_la_SOURCES = \
 	fsapi.c \
+	fsapi_options.c \
 	node.c \
 	rb_tree.c \
 	rb_tree.h \
