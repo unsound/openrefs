@@ -162,6 +162,7 @@ jobs:
         prepare: |
           pkg install -y fusefs-libs autoconf autoconf-switch automake libtool pkgconf
         run: |
+          export LANG=C
           ./autogen.sh
           ./configure CFLAGS='-Wall -Wextra'
           make
