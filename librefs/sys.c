@@ -143,7 +143,7 @@ int sys_unistr_decode(const refschar *ins, const size_t ins_len,
 		}
 
 		if(outs) {
-			if(outs_remaining < utf8_code_units + 1) {
+			if(outs_remaining < (u8) (utf8_code_units + 1)) {
 				err = E2BIG;
 				goto out;
 			}
