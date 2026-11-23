@@ -3629,27 +3629,27 @@ static int fsapi_linux_read_handle_io(
 		(fsapi_linux_read_iocontext*) context;
 
 	int err = 0;
-	sys_iohandler iohandler;
+	sys_iotarget iotarget;
 
-	memset(&iohandler, 0, sizeof(iohandler));
+	memset(&iotarget, 0, sizeof(iotarget));
 
 	sys_log_debug("Transferring %" PRIuz " bytes from device offset "
 		"%" PRIu64 " to user buffer %p, offset %" PRIuz "...",
 		PRAuz(size), PRAu64(offset), iocontext->buf,
 		PRAuz(iocontext->bytes_read));
 
-	iohandler.context = iocontext;
-	iohandler.copy_data = fsapi_linux_read_copy_data;
+	iotarget.context = iocontext;
+	iotarget.copy_data = fsapi_linux_read_copy_data;
 
-	err = sys_device_pread_iohandler(
+	err = sys_device_pread_iotarget(
 		/* sys_device *dev */
 		dev,
 		/* u64 offset */
 		offset,
 		/* size_t nbytes */
 		size,
-		/* sys_iohandler *iohandler */
-		&iohandler);
+		/* sys_iotarget *iotarget */
+		&iotarget);
 
 	return err;
 }
@@ -3671,14 +3671,14 @@ static ssize_t fsapi_linux_file_op_read(
 	int ret = 0;
 	int err = 0;
 	fsapi_linux_read_iocontext iocontext;
-	sys_iohandler iohandler;
+	sys_iotarget iotarget;
 
 	fsapi_linux_op_log_enter("file=%p, buf=%p, size=%" PRIuz ", "
 		"offset=%p (->%" PRId64 ")",
 		file, buf, PRAuz(size), offset, PRAd64(offset ? *offset : 0));
 
 	memset(&iocontext, 0, sizeof(iocontext));
-	memset(&iohandler, 0, sizeof(iohandler));
+	memset(&iotarget, 0, sizeof(iotarget));
 
 	if(!vol) {
 		ret = -EIO;
@@ -3686,9 +3686,9 @@ static ssize_t fsapi_linux_file_op_read(
 	}
 
 	iocontext.buf = buf;
-	iohandler.context = &iocontext;
-	iohandler.handle_io = fsapi_linux_read_handle_io;
-	iohandler.copy_data = fsapi_linux_read_copy_data;
+	iotarget.context = &iocontext;
+	iotarget.handle_io = fsapi_linux_read_handle_io;
+	iotarget.copy_data = fsapi_linux_read_copy_data;
 
 	err = fsapi_node_read(
 		/* fsapi_volume *vol */
@@ -3699,8 +3699,8 @@ static ssize_t fsapi_linux_file_op_read(
 		*offset,
 		/* size_t size */
 		size,
-		/* fsapi_iohandler *iohandler */
-		&iohandler);
+		/* sys_iotarget *iotarget */
+		&iotarget);
 	if(err) {
 		ret = -err;
 	}
@@ -3773,14 +3773,14 @@ static ssize_t fsapi_linux_file_op_write(
 	ssize_t ret = 0;
 	int err = 0;
 	fsapi_linux_write_iocontext iocontext;
-	sys_iohandler iohandler;
+	sys_iosource iosource;
 
 	fsapi_linux_op_log_enter("file=%p, buf=%p, size=%" PRIuz ", "
 		"offset=%p (->%" PRId64 ")",
 		file, buf, PRAuz(size), offset, PRAd64(offset ? *offset : 0));
 
 	memset(&iocontext, 0, sizeof(iocontext));
-	memset(&iohandler, 0, sizeof(iohandler));
+	memset(&iosource, 0, sizeof(iosource));
 
 	if(!vol) {
 		ret = -EIO;
@@ -3788,8 +3788,8 @@ static ssize_t fsapi_linux_file_op_write(
 	}
 
 	iocontext.buf = buf;
-	iohandler.context = &iocontext;
-	iohandler.get_data = fsapi_linux_write_get_data;
+	iosource.context = &iocontext;
+	iosource.get_data = fsapi_linux_write_get_data;
 
 	err = fsapi_node_write(
 		/* fsapi_volume *vol */
@@ -3800,8 +3800,8 @@ static ssize_t fsapi_linux_file_op_write(
 		*offset,
 		/* size_t size */
 		size,
-		/* fsapi_iohandler *iohandler */
-		&iohandler);
+		/* sys_iosource *iosource */
+		&iosource);
 	if(err) {
 		ret = -err;
 	}
@@ -7586,10 +7586,10 @@ static int fsapi_linux_address_space_op_readpage(
 	int ret = 0;
 	size_t data_size = 0;
 	u64 read_offset = 0;
-	fsapi_iohandler iohandler;
+	sys_iotarget iotarget;
 	fsapi_linux_address_space_read_context context;
 
-	memset(&iohandler, 0, sizeof(iohandler));
+	memset(&iotarget, 0, sizeof(iotarget));
 	memset(&context, 0, sizeof(context));
 
 	fsapi_linux_op_log_enter("file=%p, "
@@ -7622,14 +7622,14 @@ static int fsapi_linux_address_space_op_readpage(
 	context.block_size_mask = (size_t) ~(context.block_size - 1);
 	context.remaining_size = data_size;
 
-	iohandler.context = &context;
-	iohandler.handle_io = fsapi_linux_address_space_read_handle_io;
-	iohandler.handle_hole = fsapi_linux_address_space_read_handle_hole;
-	iohandler.copy_data = fsapi_linux_address_space_read_copy_data;
+	iotarget.context = &context;
+	iotarget.handle_io = fsapi_linux_address_space_read_handle_io;
+	iotarget.handle_hole = fsapi_linux_address_space_read_handle_hole;
+	iotarget.copy_data = fsapi_linux_address_space_read_copy_data;
 
 	sys_log_debug("Reading %" PRIuz " bytes from file offset %" PRIu64 " "
-		"into iohandler %p.",
-		PRAuz(data_size), PRAu64(read_offset), &iohandler);
+		"into iotarget %p.",
+		PRAuz(data_size), PRAu64(read_offset), &iotarget);
 
 	err = fsapi_node_read(
 		/* fsapi_volume *vol */
@@ -7640,8 +7640,8 @@ static int fsapi_linux_address_space_op_readpage(
 		read_offset,
 		/* size_t size */
 		data_size,
-		/* fsapi_iohandler *iohandler */
-		&iohandler);
+		/* sys_iotarget *iotarget */
+		&iotarget);
 	if(err) {
 		sys_log_perror(err, "Error reading from node");
 		ret = -err;
@@ -8137,10 +8137,10 @@ static int fsapi_linux_address_space_op_readpages(
 	int err = 0;
 	size_t data_size = 0;
 	u64 read_offset = 0;
-	fsapi_iohandler iohandler;
+	sys_iotarget iotarget;
 	fsapi_linux_address_space_read_context context;
 
-	memset(&iohandler, 0, sizeof(iohandler));
+	memset(&iotarget, 0, sizeof(iotarget));
 	memset(&context, 0, sizeof(context));
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(5,18,0))
@@ -8209,14 +8209,14 @@ static int fsapi_linux_address_space_op_readpages(
 	read_offset = ((u64) context.page->index) * PAGE_SIZE;
 #endif /* (LINUX_VERSION_CODE >= KERNEL_VERSION(5,18,0)) ... */
 
-	iohandler.context = &context;
-	iohandler.handle_io = fsapi_linux_address_space_readahead_handle_io;
-	iohandler.handle_hole = fsapi_linux_address_space_readahead_handle_hole;
-	iohandler.copy_data = fsapi_linux_address_space_readahead_copy_data;
+	iotarget.context = &context;
+	iotarget.handle_io = fsapi_linux_address_space_readahead_handle_io;
+	iotarget.handle_hole = fsapi_linux_address_space_readahead_handle_hole;
+	iotarget.copy_data = fsapi_linux_address_space_readahead_copy_data;
 
 	sys_log_debug("Reading %" PRIuz " bytes from file offset %" PRIu64 " "
-		"into iohandler %p.",
-		PRAuz(data_size), PRAu64(read_offset), &iohandler);
+		"into iotarget %p.",
+		PRAuz(data_size), PRAu64(read_offset), &iotarget);
 
 	err = fsapi_node_read(
 		/* fsapi_volume *vol */
@@ -8227,8 +8227,8 @@ static int fsapi_linux_address_space_op_readpages(
 		read_offset,
 		/* size_t size */
 		data_size,
-		/* fsapi_iohandler *iohandler */
-		&iohandler);
+		/* sys_iotarget *iotarget */
+		&iotarget);
 	if(err) {
 		sys_log_perror(err, "Error reading from node");
 		ret = -err;
@@ -8529,12 +8529,12 @@ static int fsapi_linux_xattr_get(
 
 	int ret = 0;
 	int err = 0;
-	fsapi_iohandler_buffer_context buffer_context;
-	sys_iohandler iohandler;
+	fsapi_iotarget_buffer_context buffer_context;
+	sys_iotarget iotarget;
 	u64 xattr_size = 0;
 
 	memset(&buffer_context, 0, sizeof(buffer_context));
-	memset(&iohandler, 0, sizeof(iohandler));
+	memset(&iotarget, 0, sizeof(iotarget));
 
 	fsapi_linux_op_log_enter(
 		"handler=%p, "
@@ -8556,12 +8556,11 @@ static int fsapi_linux_xattr_get(
 	}
 
 	if(size) {
-		buffer_context.buf.rw = value;
+		buffer_context.buf = value;
 		buffer_context.remaining_size = size;
-		buffer_context.is_read = SYS_TRUE;
-		iohandler.context = &buffer_context;
-		iohandler.handle_io = fsapi_iohandler_buffer_handle_io;
-		iohandler.copy_data = fsapi_iohandler_buffer_copy_data;
+		iotarget.context = &buffer_context;
+		iotarget.handle_io = fsapi_iotarget_buffer_handle_io;
+		iotarget.copy_data = fsapi_iotarget_buffer_copy_data;
 	}
 
 	err = fsapi_node_read_extended_attribute(
@@ -8577,8 +8576,8 @@ static int fsapi_linux_xattr_get(
 		0,
 		/* size_t size */
 		size,
-		/* fsapi_iohandler *iohandler */
-		size ? &iohandler : NULL,
+		/* sys_iotarget *iotarget */
+		size ? &iotarget : NULL,
 		/* u64 *out_xattr_size */
 		size ? NULL : &xattr_size);
 	if(err == ENOENT) {
@@ -8661,18 +8660,17 @@ static int fsapi_linux_xattr_set(
 	}
 
 	if(value) {
-		fsapi_iohandler_buffer_context buffer_context;
-		sys_iohandler iohandler;
+		fsapi_iosource_buffer_context buffer_context;
+		sys_iosource iosource;
 
 		memset(&buffer_context, 0, sizeof(buffer_context));
-		memset(&iohandler, 0, sizeof(iohandler));
+		memset(&iosource, 0, sizeof(iosource));
 
-		buffer_context.buf.ro = value;
+		buffer_context.buf = value;
 		buffer_context.remaining_size = size;
-		buffer_context.is_read = SYS_FALSE;
-		iohandler.context = &buffer_context;
-		iohandler.handle_io = fsapi_iohandler_buffer_handle_io;
-		iohandler.get_data = fsapi_iohandler_buffer_get_data;
+		iosource.context = &buffer_context;
+		iosource.handle_io = fsapi_iosource_buffer_handle_io;
+		iosource.get_data = fsapi_iosource_buffer_get_data;
 
 		err = fsapi_node_write_extended_attribute(
 			/* fsapi_volume *vol */
@@ -8693,8 +8691,8 @@ static int fsapi_linux_xattr_set(
 			0,
 			/* size_t size */
 			size,
-			/* fsapi_iohandler *iohandler */
-			&iohandler);
+			/* sys_iosource *iosource */
+			&iosource);
 	}
 	else {
 		err = fsapi_node_remove_extended_attribute(

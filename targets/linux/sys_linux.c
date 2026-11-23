@@ -221,7 +221,7 @@ out:
 
 static int sys_device_pread_common(sys_device *const dev, const u64 offset,
 		const size_t nbytes, void *const buf,
-		sys_iohandler *const iohandler)
+		sys_iotarget *const iotarget)
 {
 	struct super_block *const sb = (struct super_block*) dev;
 
@@ -361,9 +361,9 @@ static int sys_device_pread_common(sys_device *const dev, const u64 offset,
 				remaining_in_block);
 		}
 		else {
-			err = iohandler->copy_data(
+			err = iotarget->copy_data(
 				/* void *context */
-				iohandler->context,
+				iotarget->context,
 				/* const void *data */
 				&bh->b_data[offset_in_block],
 				/* size_t size */
@@ -410,12 +410,12 @@ int sys_device_pread(sys_device *const dev, const u64 offset,
 		nbytes,
 		/* void *buf */
 		buf,
-		/* sys_iohandler *iohandler */
+		/* sys_iotarget *iotarget */
 		NULL);
 }
 
-int sys_device_pread_iohandler(sys_device *const dev, const u64 offset,
-		const size_t nbytes, sys_iohandler *const iohandler)
+int sys_device_pread_iotarget(sys_device *const dev, const u64 offset,
+		const size_t nbytes, sys_iotarget *const iotarget)
 {
 	return sys_device_pread_common(
 		/* sys_device *dev */
@@ -426,8 +426,8 @@ int sys_device_pread_iohandler(sys_device *const dev, const u64 offset,
 		nbytes,
 		/* void *buf */
 		NULL,
-		/* sys_iohandler *iohandler */
-		iohandler);
+		/* sys_iotarget *iotarget */
+		iotarget);
 }
 
 int sys_device_get_sector_size(sys_device *const dev,

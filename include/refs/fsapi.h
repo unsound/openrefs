@@ -330,8 +330,6 @@ typedef struct {
 	size_t symlink_target_length;
 } fsapi_node_attributes;
 
-typedef sys_iohandler fsapi_iohandler;
-
 typedef enum {
 	FSAPI_RENAME_FLAG_EXCHANGE = 0x1,
 	FSAPI_RENAME_FLAG_NOREPLACE = 0x2,
@@ -345,16 +343,20 @@ typedef enum {
 } fsapi_node_extended_attribute_flags;
 
 /**
- * Context for the buffer I/O handler.
+ * Context for the buffer I/O target.
  */
 typedef struct {
-	union {
-		char *rw;
-		const char *ro;
-	} buf;
+	char *buf;
 	size_t remaining_size;
-	sys_bool is_read;
-} fsapi_iohandler_buffer_context;
+} fsapi_iotarget_buffer_context;
+
+/**
+ * Context for the buffer I/O source.
+ */
+typedef struct {
+	const char *buf;
+	size_t remaining_size;
+} fsapi_iosource_buffer_context;
 
 /**
  * Options specification for the fsapi implementation.
@@ -362,11 +364,11 @@ typedef struct {
 extern fsapi_options_specification fsapi_options_spec;
 
 /**
- * I/O handler for the buffer I/O handler.
+ * I/O handler for the buffer I/O target.
  *
  * @param context
  *      (in) The context for the I/O target handler (for this handler this is an
- *      @ref fsapi_iohandler_buffer_context).
+ *      @ref fsapi_iotarget_buffer_context).
  * @param dev
  *      (in) The @ref sys_device for which this I/O operation is to be peformed.
  * @param offset
@@ -377,7 +379,7 @@ extern fsapi_options_specification fsapi_options_spec;
  * @return 0 on success and a non-0 @p errno value on failure.
  */
 FSAPI_VISIBILITY
-int fsapi_iohandler_buffer_handle_io(
+int fsapi_iotarget_buffer_handle_io(
 		void *context,
 		sys_device *dev,
 		u64 offset,
@@ -388,7 +390,7 @@ int fsapi_iohandler_buffer_handle_io(
  *
  * @param context
  *      (in) The context for the I/O target handler (for this handler this is an
- *      @ref fsapi_iohandler_buffer_context).
+ *      @ref fsapi_iotarget_buffer_context).
  * @param buffer
  *      (in) The buffer from which the data should be copied.
  * @param size
@@ -397,17 +399,39 @@ int fsapi_iohandler_buffer_handle_io(
  * @return 0 on success and a non-0 @p errno value on failure.
  */
 FSAPI_VISIBILITY
-int fsapi_iohandler_buffer_copy_data(
+int fsapi_iotarget_buffer_copy_data(
 		void *context,
 		const void *buffer,
+		size_t size);
+
+/**
+ * I/O handler for the buffer I/O source.
+ *
+ * @param context
+ *      (in) The context for the I/O source handler (for this handler this is an
+ *      @ref fsapi_iosource_buffer_context).
+ * @param dev
+ *      (in) The @ref sys_device for which this I/O operation is to be peformed.
+ * @param offset
+ *      (in) The byte offset in @p dev where the I/O should start.
+ * @param size
+ *      (in) The number of bytes to process.
+ *
+ * @return 0 on success and a non-0 @p errno value on failure.
+ */
+FSAPI_VISIBILITY
+int fsapi_iosource_buffer_handle_io(
+		void *context,
+		sys_device *dev,
+		u64 offset,
 		size_t size);
 
 /**
  * @brief Handler for getting data from the buffer (e.g.\ a write operation).
  *
  * @param context
- *      (in) The context for the I/O target handler (for this handler this is an
- *      @ref fsapi_iohandler_buffer_context).
+ *      (in) The context for the I/O source handler (for this handler this is an
+ *      @ref fsapi_iosource_buffer_context).
  * @param buffer
  *      (in) The buffer to which the data should be copied.
  * @param size
@@ -416,7 +440,7 @@ int fsapi_iohandler_buffer_copy_data(
  * @return 0 on success and a non-0 @p errno value on failure.
  */
 FSAPI_VISIBILITY
-int fsapi_iohandler_buffer_get_data(
+int fsapi_iosource_buffer_get_data(
 		void *context,
 		void *buffer,
 		size_t size);
@@ -695,9 +719,9 @@ int fsapi_node_get_raw_data(
  *      (in) The byte offset in the file where reading should start.
  * @param size
  *      (in) The number of bytes to read.
- * @param iohandler
- *      (in) The @ref fsapi_iohandler that will process the read parameters and
- *      perform the I/O.
+ * @param iotarget
+ *      (in) The @ref fsapi_iotarget of the read. The I/O target will perform
+ *      the I/O based on parameters passed to it.
  *
  * @return 0 on success and a non-0 @p errno value on failure.
  */
@@ -707,7 +731,7 @@ int fsapi_node_read(
 		fsapi_node *node,
 		u64 offset,
 		size_t size,
-		fsapi_iohandler *iohandler);
+		sys_iotarget *iotarget);
 
 FSAPI_VISIBILITY
 int fsapi_node_write(
@@ -715,7 +739,7 @@ int fsapi_node_write(
 		fsapi_node *node,
 		u64 offset,
 		size_t size,
-		fsapi_iohandler *iohandler);
+		sys_iosource *iosource);
 
 FSAPI_VISIBILITY
 int fsapi_node_sync(
@@ -823,11 +847,11 @@ int fsapi_node_list_extended_attributes(
  *      (in) The byte offset in the file where reading should start.
  * @param size
  *      (in) The number of bytes to read.
- * @param iohandler
- *      (in) (optional) The @ref fsapi_iohandler that will process the read
- *      parameters and perform the extended attribute I/O. If handling the I/O
- *      is not needed for this call (e.g. the caller only wants the attribute
- *      size) then @p NULL should be passed here.
+ * @param iotarget
+ *      (in) (optional) The @ref sys_iotarget for the read. The I/O target will
+ *      perform the extended attribute I/O based on parameters passed to it.
+ *      If I/O is not needed for this call (e.g. the caller only wants the
+ *      attribute size) then @p NULL should be passed here.
  * @param out_xattr_size
  *      (out) (optional) Pointer to a @ref u64 field that on successful return
  *      will receive the total size of the extended attribute.
@@ -842,7 +866,7 @@ int fsapi_node_read_extended_attribute(
 		size_t xattr_name_length,
 		u64 offset,
 		size_t size,
-		fsapi_iohandler *iohandler,
+		sys_iotarget *iotarget,
 		u64 *out_xattr_size);
 
 FSAPI_VISIBILITY
@@ -854,7 +878,7 @@ int fsapi_node_write_extended_attribute(
 		fsapi_node_extended_attribute_flags flags,
 		u64 offset,
 		size_t size,
-		fsapi_iohandler *iohandler);
+		sys_iosource *iosource);
 
 FSAPI_VISIBILITY
 int fsapi_node_remove_extended_attribute(

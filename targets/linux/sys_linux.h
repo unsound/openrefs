@@ -373,8 +373,8 @@ static inline int sys_device_close(sys_device **const dev)
 int sys_device_pread(sys_device *const dev, const u64 offset,
 		const size_t nbytes, void *const buf);
 
-int sys_device_pread_iohandler(sys_device *const dev, const u64 offset,
-		const size_t nbytes, sys_iohandler *const iohandler);
+int sys_device_pread_iotarget(sys_device *const dev, const u64 offset,
+		const size_t nbytes, sys_iotarget *const iotarget);
 
 int sys_device_get_sector_size(sys_device *const dev,
 		u32 *const out_sector_size);
