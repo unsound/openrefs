@@ -30,6 +30,8 @@ librefs_la_LDFLAGS  = \
 librefs_la_LIBADD  = \
 	$(COMMON_LIBS)
 librefs_la_SOURCES = \
+	crc.c \
+	crc.h \
 	fsapi.c \
 	fsapi_options.c \
 	node.c \
