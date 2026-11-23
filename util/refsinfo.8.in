@@ -1,6 +1,6 @@
 .\" Copyright (c) 2022-2025 Erik Larsson
 .\"
-.TH REFSINFO 8 "May 2023" "refsprogs @VERSION@"
+.TH REFSINFO 8 "May 2023" "OpenReFS @VERSION@"
 .SH NAME
 refsinfo - Display information about a ReFS volume
 .SH SYNOPSIS
@@ -42,8 +42,8 @@ Show more information than in regular mode.
 .SH BUGS
 There are no known problems with
 .BR refsinfo .
-If you find a bug, then please report it to the refsprogs bug tracker on github:
-https://github.com/unsound/refsprogs/issues
+If you find a bug, then please report it to the OpenReFS bug tracker on github:
+https://github.com/unsound/openrefs/issues
 .hy
 .SH AUTHORS
 .B refsinfo
@@ -51,7 +51,7 @@ was written by Erik Larsson
 .SH AVAILABILITY
 .B refsinfo
 is part of the
-.B refsprogs
+.B OpenReFS
 package.
 .hy
 .SH SEE ALSO

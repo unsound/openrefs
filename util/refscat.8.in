@@ -1,6 +1,6 @@
 .\" Copyright (c) 2022-2025 Erik Larsson
 .\"
-.TH REFSCAT 8 "August 2025" "refsprogs @VERSION@"
+.TH REFSCAT 8 "August 2025" "OpenReFS @VERSION@"
 .SH NAME
 refscat \- Print the data of a file to standard output
 .SH SYNOPSIS
@@ -35,8 +35,8 @@ Extract the data of the alternate data stream (ADS) named
 .B NAME
 attached to the specified file.
 .SH BUGS
-If you find a bug, then please report it to the refsprogs bug tracker on github:
-https://github.com/unsound/refsprogs/issues
+If you find a bug, then please report it to the OpenReFS bug tracker on github:
+https://github.com/unsound/openrefs/issues
 .hy
 .SH AUTHORS
 .B refscat
@@ -44,7 +44,7 @@ was written by Erik Larsson
 .SH AVAILABILITY
 .B refscat
 is part of the
-.B refsprogs
+.B OpenReFS
 package.
 .hy
 .SH SEE ALSO

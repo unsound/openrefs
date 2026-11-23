@@ -1,5 +1,5 @@
 AC_PREREQ(2.60)
-AC_INIT([refsprogs],[2026.10.23],[catacombae@gmail.com])
+AC_INIT([openrefs],[2026.10.23],[catacombae@gmail.com])
 LIBREFS_VERSION="18"
 AC_CONFIG_SRCDIR([util/refsls.c])
 
@@ -328,4 +328,4 @@ AC_CONFIG_FILES([
 ])
 AC_OUTPUT
 
-echo "You can now type 'make' to build refsprogs."
+echo "You can now type 'make' to build OpenReFS."

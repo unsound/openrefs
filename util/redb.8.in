@@ -1,6 +1,6 @@
 .\" Copyright (c) 2022-2025 Erik Larsson
 .\"
-.TH REDB 8 "May 2023" "refsprogs @VERSION@"
+.TH REDB 8 "May 2023" "OpenReFS @VERSION@"
 .SH NAME
 redb \- Print debugging information for an ReFS volume
 .SH SYNOPSIS
@@ -28,8 +28,8 @@ Scan device for metadata signatures and print found signatures to stdout.
 .SH BUGS
 There are no known problems with
 .BR redb .
-If you find a bug, then please report it to the refsprogs bug tracker on github:
-https://github.com/unsound/refsprogs/issues
+If you find a bug, then please report it to the OpenReFS bug tracker on github:
+https://github.com/unsound/openrefs/issues
 .hy
 .SH AUTHORS
 .B redb
@@ -37,7 +37,7 @@ was written by Erik Larsson
 .SH AVAILABILITY
 .B redb
 is part of the
-.B refsprogs
+.B OpenReFS
 package.
 .hy
 .SH SEE ALSO

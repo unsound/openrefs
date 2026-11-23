@@ -1,6 +1,6 @@
 .\" Copyright (c) 2022-2025 Erik Larsson
 .\"
-.TH REFSLS 8 "June 2025" "refsprogs @VERSION@"
+.TH REFSLS 8 "June 2025" "OpenReFS @VERSION@"
 .SH NAME
 refsls \- List files on an ReFS volume.
 .SH SYNOPSIS
@@ -46,8 +46,8 @@ Show alternate data streams (ADSs) of files in listing.
 .SH BUGS
 There are no known problems with
 .BR refsls .
-If you find a bug, then please report it to the refsprogs bug tracker on github:
-https://github.com/unsound/refsprogs/issues
+If you find a bug, then please report it to the OpenReFS bug tracker on github:
+https://github.com/unsound/openrefs/issues
 .hy
 .SH AUTHORS
 .B refsls
@@ -55,7 +55,7 @@ was written by Erik Larsson
 .SH AVAILABILITY
 .B refsls
 is part of the
-.B refsprogs
+.B OpenReFS
 package.
 .hy
 .SH SEE ALSO
