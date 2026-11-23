@@ -10805,7 +10805,7 @@ static int refs_node_parse_attribute_non_resident_data_value(
 					&buf[j]);
 			}
 		}
-		else if((j - j_start) < payload_offset) {
+		else if((u16) (j - j_start) < payload_offset) {
 			print_data_with_base(prefix, indent, j, value_size,
 				&buf[j], payload_offset - (j - j_start));
 			j = j_start + payload_offset;
